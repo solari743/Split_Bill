@@ -4,39 +4,45 @@ import { Ionicons } from '@expo/vector-icons';
 import HomeScreen from '../screens/HomeScreen';
 import ScanReceiptScreen from '../screens/ScanReceiptScreen';
 import HistoryScreen from '../screens/HistoryScreen';
-import ProfileScreen from '../screens/ProfileScreen';
 import CustomTabBarButton from '../components/CustomTabBarButton';
+import { useTheme } from '../context/ThemeContext';
 
 const Tab = createBottomTabNavigator();
 
 export default function BottomTabNavigator() {
+  const { theme } = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: '#6200ee',
-        tabBarInactiveTintColor: '#8e8e93',
+        tabBarActiveTintColor: theme.tabBarActive,
+        tabBarInactiveTintColor: theme.tabBarInactive,
         tabBarStyle: {
           height: 60,
           paddingBottom: 8,
           paddingTop: 8,
-          backgroundColor: '#fff',
+          backgroundColor: theme.tabBarBackground,
           borderTopWidth: 1,
-          borderTopColor: '#e0e0e0',
+          borderTopColor: theme.border,
         },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
         },
         headerStyle: {
-          backgroundColor: '#6200ee',
+          backgroundColor: theme.background,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.border,
+          elevation: 0,
+          shadowOpacity: 0,
         },
-        headerTintColor: '#fff',
+        headerTintColor: theme.text,
         headerTitleStyle: {
-          fontWeight: 'bold',
+          fontWeight: '600',
+          fontSize: 20,
         },
       }}
     >
-      {/* Home Tab */}
       <Tab.Screen
         name="Home"
         component={HomeScreen}
@@ -49,13 +55,12 @@ export default function BottomTabNavigator() {
         }}
       />
 
-      {/* Scan Receipt Tab - Custom Big Button */}
       <Tab.Screen
         name="ScanReceipt"
         component={ScanReceiptScreen}
         options={{
           tabBarIcon: ({ color }) => (
-            <Ionicons name="camera" size={32} color="#fff" />
+            <Ionicons name="camera" size={32} color="#000" />
           ),
           tabBarLabel: '',
           tabBarButton: (props) => <CustomTabBarButton {...props} />,
@@ -63,7 +68,6 @@ export default function BottomTabNavigator() {
         }}
       />
 
-      {/* History Tab */}
       <Tab.Screen
         name="History"
         component={HistoryScreen}
@@ -72,20 +76,7 @@ export default function BottomTabNavigator() {
             <Ionicons name="receipt" size={size} color={color} />
           ),
           tabBarLabel: 'History',
-          headerTitle: 'Bill History',
-        }}
-      />
-
-      {/* Profile/Settings Tab */}
-      <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
-          ),
-          tabBarLabel: 'Profile',
-          headerTitle: 'Profile & Settings',
+          headerTitle: 'History',
         }}
       />
     </Tab.Navigator>

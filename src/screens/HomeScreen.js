@@ -1,243 +1,426 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useLayoutEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 
 export default function HomeScreen({ navigation }) {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Profile')}
+          style={styles.profileButton}
+        >
+          <Ionicons
+            name="person-circle-outline"
+            size={28}
+            color={theme.text}
+          />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, theme]);
+
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        {/* Quick Stats Card */}
-        <View style={styles.statsCard}>
-          <Text style={styles.statsTitle}>This Month</Text>
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>You Owe</Text>
-              <Text style={styles.statAmount}>$45.50</Text>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Centered Quick Stats */}
+      <View style={styles.statsWrapper}>
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <View style={styles.statRow}>
+              <View style={styles.statIconContainer}>
+                <Ionicons name="arrow-down" size={20} color={theme.error} />
+              </View>
+              <View style={styles.statInfo}>
+                <Text style={styles.statLabel}>You Owe</Text>
+                <Text style={styles.statAmountNegative}>
+                  {/* placeholder */}
+                  $45.50
+                </Text>
+              </View>
             </View>
-            <View style={styles.divider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Owed to You</Text>
-              <Text style={styles.statAmountPositive}>$30.00</Text>
+          </View>
+
+          <View style={styles.statCard}>
+            <View style={styles.statRow}>
+              <View style={styles.statIconContainerGreen}>
+                <Ionicons name="arrow-up" size={20} color={theme.success} />
+              </View>
+              <View style={styles.statInfo}>
+                <Text style={styles.statLabel}>Owed to You</Text>
+                <Text style={styles.statAmountPositive}>$30.00</Text>
+              </View>
             </View>
           </View>
         </View>
+      </View>
 
-        {/* Quick Actions */}
-        <View style={styles.quickActions}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => navigation.navigate('ScanReceipt')}
-          >
-            <Ionicons name="camera" size={24} color="#fff" />
-            <Text style={styles.actionButtonText}>Scan Receipt</Text>
-          </TouchableOpacity>
+      {/* Action Chips */}
+      <View style={styles.actionChips}>
+        <TouchableOpacity style={styles.chip}>
+          <Ionicons name="people-outline" size={18} color={theme.primary} />
+          <Text style={styles.chipText}>Split</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButtonSecondary}>
-            <Ionicons name="people" size={24} color="#6200ee" />
-            <Text style={styles.actionButtonTextSecondary}>Split with Friends</Text>
+        <TouchableOpacity style={styles.chip}>
+          <Ionicons
+            name="checkmark-circle-outline"
+            size={18}
+            color={theme.primary}
+          />
+          <Text style={styles.chipText}>Settle</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.chip}>
+          <Ionicons name="receipt-outline" size={18} color={theme.primary} />
+          <Text style={styles.chipText}>New Bill</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Recent Activity */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Recent Activity</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('History')}>
+            <Text style={styles.seeAll}>See All</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Recent Bills */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Bills</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('History')}>
-              <Text style={styles.seeAll}>See All</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.billsList}>
+          {[
+            {
+              icon: 'restaurant',
+              title: 'Dinner at Restaurant',
+              meta: 'Jan 5 • 4 people',
+              total: '$75.00',
+              share: 'You: $18.75',
+            },
+            {
+              icon: 'film',
+              title: 'Movie Tickets',
+              meta: 'Jan 3 • 3 people',
+              total: '$60.00',
+              share: '+$20.00',
+              positive: true,
+            },
+            {
+              icon: 'cart',
+              title: 'Groceries',
+              meta: 'Dec 28 • 2 people',
+              total: '$85.30',
+              share: 'You: $42.65',
+            },
+            {
+              icon: 'home',
+              title: 'Utilities',
+              meta: 'Dec 20 • 3 people',
+              total: '$150.00',
+              share: 'You: $50.00',
+            },
+          ].map((item, index) => (
+            <View key={index}>
+              <TouchableOpacity style={styles.billItem}>
+                <View style={styles.billLeft}>
+                  <View
+                    style={[
+                      styles.billIconCircle,
+                      { backgroundColor: theme.cardAccentDark },
+                    ]}
+                  >
+                    <Ionicons
+                      name={item.icon}
+                      size={20}
+                      color={theme.primary}
+                    />
+                  </View>
+                  <View style={styles.billDetails}>
+                    <Text style={styles.billName}>{item.title}</Text>
+                    <Text style={styles.billSubtext}>{item.meta}</Text>
+                  </View>
+                </View>
 
-          {/* Bill Card Example */}
-          <TouchableOpacity style={styles.billCard}>
-            <View style={styles.billIcon}>
-              <Ionicons name="restaurant" size={24} color="#6200ee" />
-            </View>
-            <View style={styles.billInfo}>
-              <Text style={styles.billName}>Dinner at Restaurant</Text>
-              <Text style={styles.billDate}>Jan 5, 2026 • 4 people</Text>
-            </View>
-            <View style={styles.billAmount}>
-              <Text style={styles.billTotal}>$75.00</Text>
-              <Text style={styles.billStatus}>Pending</Text>
-            </View>
-          </TouchableOpacity>
+                <View style={styles.billRight}>
+                  <Text style={styles.billAmount}>{item.total}</Text>
+                  <Text
+                    style={
+                      item.positive
+                        ? styles.billYourShareGreen
+                        : styles.billYourShare
+                    }
+                  >
+                    {item.share}
+                  </Text>
+                </View>
+              </TouchableOpacity>
 
-          <TouchableOpacity style={styles.billCard}>
-            <View style={styles.billIcon}>
-              <Ionicons name="film" size={24} color="#6200ee" />
+              {index < 3 && <View style={styles.billDivider} />}
             </View>
-            <View style={styles.billInfo}>
-              <Text style={styles.billName}>Movie Tickets</Text>
-              <Text style={styles.billDate}>Jan 3, 2026 • 3 people</Text>
+          ))}
+        </View>
+      </View>
+
+      {/* Friends */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Friends</Text>
+
+        <View style={styles.friendsList}>
+          {[
+            { name: 'Sarah Johnson', initial: 'S', text: 'owes you $25.00', pos: true },
+            { name: 'Mike Chen', initial: 'M', text: 'you owe $15.50' },
+            { name: 'Alex Kim', initial: 'A', text: 'owes you $5.00', pos: true },
+          ].map((friend, index) => (
+            <View key={index}>
+              <TouchableOpacity style={styles.friendItem}>
+                <View style={styles.friendLeft}>
+                  <View style={styles.friendAvatar}>
+                    <Text style={styles.friendInitial}>{friend.initial}</Text>
+                  </View>
+                  <Text style={styles.friendName}>{friend.name}</Text>
+                </View>
+                <Text
+                  style={friend.pos ? styles.friendOwesYou : styles.friendYouOwe}
+                >
+                  {friend.text}
+                </Text>
+              </TouchableOpacity>
+
+              {index < 2 && <View style={styles.billDivider} />}
             </View>
-            <View style={styles.billAmount}>
-              <Text style={styles.billTotal}>$60.00</Text>
-              <Text style={styles.billStatusSettled}>Settled</Text>
-            </View>
-          </TouchableOpacity>
+          ))}
         </View>
       </View>
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  content: {
-    padding: 16,
-  },
-  statsCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  statsTitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 16,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  divider: {
-    width: 1,
-    backgroundColor: '#e0e0e0',
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#999',
-    marginBottom: 8,
-  },
-  statAmount: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ff3b30',
-  },
-  statAmountPositive: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#34c759',
-  },
-  quickActions: {
-    marginBottom: 24,
-  },
-  actionButton: {
-    backgroundColor: '#6200ee',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  actionButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
-  },
-  actionButtonSecondary: {
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#6200ee',
-  },
-  actionButtonTextSecondary: {
-    color: '#6200ee',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  seeAll: {
-    fontSize: 14,
-    color: '#6200ee',
-    fontWeight: '600',
-  },
-  billCard: {
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-  },
-  billIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#f0e6ff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  billInfo: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  billName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  billDate: {
-    fontSize: 14,
-    color: '#999',
-  },
-  billAmount: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  },
-  billTotal: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  billStatus: {
-    fontSize: 12,
-    color: '#ff9500',
-    fontWeight: '600',
-  },
-  billStatusSettled: {
-    fontSize: 12,
-    color: '#34c759',
-    fontWeight: '600',
-  },
-});
+const createStyles = (theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+
+    profileButton: {
+      marginRight: 16,
+    },
+
+    /* ===== Stats ===== */
+    statsWrapper: {
+      marginTop: 24,
+      alignItems: 'center',
+    },
+    statsContainer: {
+      width: '100%',
+      alignItems: 'center',
+      gap: 12,
+    },
+    statCard: {
+      width: '85%',
+      backgroundColor: theme.card,
+      borderRadius: 8,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    statRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    statIconContainer: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: theme.cardDark,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 12,
+    },
+    statIconContainerGreen: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: theme.cardAccentDark,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 12,
+    },
+    statInfo: { flex: 1 },
+    statLabel: {
+      fontSize: 12,
+      color: theme.textTertiary,
+      marginBottom: 4,
+      textTransform: 'uppercase',
+    },
+    statAmountNegative: {
+      fontSize: 20,
+      fontWeight: '600',
+      color: theme.error,
+    },
+    statAmountPositive: {
+      fontSize: 20,
+      fontWeight: '600',
+      color: theme.success,
+    },
+
+    /* ===== Chips ===== */
+    actionChips: {
+      flexDirection: 'row',
+      paddingHorizontal: 20,
+      marginVertical: 32,
+      gap: 8,
+    },
+    chip: {
+      flex: 1,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingVertical: 12,
+      borderRadius: 24,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.card,
+      gap: 6,
+    },
+    chipText: {
+      fontSize: 13,
+      color: theme.text,
+      fontWeight: '500',
+    },
+
+    /* ===== Sections ===== */
+    section: {
+      marginBottom: 32,
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      marginBottom: 16,
+    },
+    sectionTitle: {
+      fontSize: 22,
+      fontWeight: '600',
+      color: theme.text,
+    },
+    seeAll: {
+      fontSize: 15,
+      color: theme.primary,
+      fontWeight: '500',
+    },
+
+    /* ===== Lists ===== */
+    billsList: {
+      backgroundColor: theme.card,
+      marginHorizontal: 20,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    billItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 16,
+    },
+    billLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    billIconCircle: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 12,
+    },
+    billDetails: { flex: 1 },
+    billName: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: theme.text,
+    },
+    billSubtext: {
+      fontSize: 13,
+      color: theme.textTertiary,
+    },
+    billRight: { alignItems: 'flex-end' },
+    billAmount: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: theme.text,
+    },
+    billYourShare: {
+      fontSize: 13,
+      color: theme.textSecondary,
+    },
+    billYourShareGreen: {
+      fontSize: 13,
+      color: theme.success,
+      fontWeight: '500',
+    },
+    billDivider: {
+      height: 1,
+      backgroundColor: theme.border,
+      marginLeft: 68,
+    },
+
+    /* ===== Friends ===== */
+    friendsList: {
+      backgroundColor: theme.card,
+      marginHorizontal: 20,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    friendItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 16,
+    },
+    friendLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    friendAvatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: theme.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 12,
+    },
+    friendInitial: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#000',
+    },
+    friendName: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: theme.text,
+    },
+    friendOwesYou: {
+      fontSize: 14,
+      color: theme.success,
+      fontWeight: '500',
+    },
+    friendYouOwe: {
+      fontSize: 14,
+      color: theme.error,
+      fontWeight: '500',
+    },
+  });
