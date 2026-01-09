@@ -8,8 +8,12 @@ import {
   Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 
 export default function ProfileScreen() {
+  const { theme, isDark, toggleTheme } = useTheme();
+  const styles = createStyles(theme);
+
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
 
   return (
@@ -17,7 +21,7 @@ export default function ProfileScreen() {
       {/* Profile Header */}
       <View style={styles.profileHeader}>
         <View style={styles.avatar}>
-          <Ionicons name="person" size={48} color="#6200ee" />
+          <Ionicons name="person" size={48} color={theme.primary} />
         </View>
         <Text style={styles.name}>John Doe</Text>
         <Text style={styles.email}>john.doe@email.com</Text>
@@ -26,120 +30,111 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Settings Sections */}
+      {/* Appearance */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Appearance</Text>
+
+        <View style={styles.settingItem}>
+          <View style={styles.settingLeft}>
+            <Ionicons
+              name={isDark ? 'moon' : 'sunny'}
+              size={24}
+              color={theme.textSecondary}
+            />
+            <Text style={styles.settingText}>Dark Mode</Text>
+          </View>
+          <Switch
+            value={isDark}
+            onValueChange={toggleTheme}
+            trackColor={{ false: '#d1d1d6', true: theme.primaryLight }}
+            thumbColor={isDark ? theme.primary : '#f4f3f4'}
+          />
+        </View>
+      </View>
+
+      {/* Preferences */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Preferences</Text>
 
         <TouchableOpacity style={styles.settingItem}>
           <View style={styles.settingLeft}>
-            <Ionicons name="cash-outline" size={24} color="#666" />
+            <Ionicons name="cash-outline" size={24} color={theme.textSecondary} />
             <Text style={styles.settingText}>Currency</Text>
           </View>
           <View style={styles.settingRight}>
             <Text style={styles.settingValue}>USD</Text>
-            <Ionicons name="chevron-forward" size={20} color="#999" />
+            <Ionicons name="chevron-forward" size={20} color={theme.textTertiary} />
           </View>
         </TouchableOpacity>
 
         <View style={styles.settingItem}>
           <View style={styles.settingLeft}>
-            <Ionicons name="notifications-outline" size={24} color="#666" />
+            <Ionicons
+              name="notifications-outline"
+              size={24}
+              color={theme.textSecondary}
+            />
             <Text style={styles.settingText}>Notifications</Text>
           </View>
           <Switch
             value={notificationsEnabled}
             onValueChange={setNotificationsEnabled}
-            trackColor={{ false: '#d1d1d6', true: '#bb86fc' }}
-            thumbColor={notificationsEnabled ? '#6200ee' : '#f4f3f4'}
+            trackColor={{ false: '#d1d1d6', true: theme.primaryLight }}
+            thumbColor={notificationsEnabled ? theme.primary : '#f4f3f4'}
           />
         </View>
-
-        <TouchableOpacity style={styles.settingItem}>
-          <View style={styles.settingLeft}>
-            <Ionicons name="calculator-outline" size={24} color="#666" />
-            <Text style={styles.settingText}>Default Split Method</Text>
-          </View>
-          <View style={styles.settingRight}>
-            <Text style={styles.settingValue}>Equal</Text>
-            <Ionicons name="chevron-forward" size={20} color="#999" />
-          </View>
-        </TouchableOpacity>
       </View>
 
+      {/* Payment Methods */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Payment Methods</Text>
 
-        <TouchableOpacity style={styles.settingItem}>
-          <View style={styles.settingLeft}>
-            <Ionicons name="card-outline" size={24} color="#666" />
-            <Text style={styles.settingText}>Venmo</Text>
-          </View>
-          <View style={styles.settingRight}>
-            <Text style={styles.settingValueLink}>Link</Text>
-            <Ionicons name="chevron-forward" size={20} color="#999" />
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.settingItem}>
-          <View style={styles.settingLeft}>
-            <Ionicons name="logo-paypal" size={24} color="#666" />
-            <Text style={styles.settingText}>PayPal</Text>
-          </View>
-          <View style={styles.settingRight}>
-            <Text style={styles.settingValueLink}>Link</Text>
-            <Ionicons name="chevron-forward" size={20} color="#999" />
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.addButton}>
-          <Ionicons name="add-circle-outline" size={20} color="#6200ee" />
-          <Text style={styles.addButtonText}>Add Payment Method</Text>
-        </TouchableOpacity>
+        {['Venmo', 'PayPal'].map((method) => (
+          <TouchableOpacity key={method} style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="card-outline" size={24} color={theme.textSecondary} />
+              <Text style={styles.settingText}>{method}</Text>
+            </View>
+            <View style={styles.settingRight}>
+              <Text style={[styles.settingValue, { color: theme.primary }]}>
+                Link
+              </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={theme.textTertiary}
+              />
+            </View>
+          </TouchableOpacity>
+        ))}
       </View>
 
+      {/* Data & Privacy */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Data & Privacy</Text>
 
-        <TouchableOpacity style={styles.settingItem}>
-          <View style={styles.settingLeft}>
-            <Ionicons name="download-outline" size={24} color="#666" />
-            <Text style={styles.settingText}>Export Data</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#999" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.settingItem}>
-          <View style={styles.settingLeft}>
-            <Ionicons name="shield-outline" size={24} color="#666" />
-            <Text style={styles.settingText}>Privacy Policy</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#999" />
-        </TouchableOpacity>
+        {['Export Data', 'Privacy Policy'].map((item) => (
+          <TouchableOpacity key={item} style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <Ionicons
+                name="shield-outline"
+                size={24}
+                color={theme.textSecondary}
+              />
+              <Text style={styles.settingText}>{item}</Text>
+            </View>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={theme.textTertiary}
+            />
+          </TouchableOpacity>
+        ))}
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>About</Text>
-
-        <View style={styles.settingItem}>
-          <View style={styles.settingLeft}>
-            <Ionicons name="information-circle-outline" size={24} color="#666" />
-            <Text style={styles.settingText}>Version</Text>
-          </View>
-          <Text style={styles.settingValue}>1.0.0</Text>
-        </View>
-
-        <TouchableOpacity style={styles.settingItem}>
-          <View style={styles.settingLeft}>
-            <Ionicons name="help-circle-outline" size={24} color="#666" />
-            <Text style={styles.settingText}>Help & Support</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#999" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Logout Button */}
+      {/* Logout */}
       <TouchableOpacity style={styles.logoutButton}>
-        <Text style={styles.logoutButtonText}>Logout</Text>
+        <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
 
       <View style={styles.bottomSpacing} />
@@ -147,23 +142,23 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.background,
   },
   profileHeader: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.card,
     alignItems: 'center',
     padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: theme.border,
   },
   avatar: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#f0e6ff',
+    backgroundColor: theme.cardAccent,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -171,12 +166,12 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: theme.text,
     marginBottom: 4,
   },
   email: {
     fontSize: 14,
-    color: '#999',
+    color: theme.textTertiary,
     marginBottom: 16,
   },
   editButton: {
@@ -184,22 +179,22 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#6200ee',
+    borderColor: theme.primary,
   },
   editButtonText: {
-    color: '#6200ee',
+    color: theme.primary,
     fontSize: 14,
     fontWeight: '600',
   },
   section: {
     marginTop: 24,
-    backgroundColor: '#fff',
+    backgroundColor: theme.card,
     paddingVertical: 8,
   },
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#999',
+    color: theme.textTertiary,
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 8,
@@ -213,7 +208,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f5f5f5',
+    borderBottomColor: theme.background,
   },
   settingLeft: {
     flexDirection: 'row',
@@ -222,7 +217,7 @@ const styles = StyleSheet.create({
   },
   settingText: {
     fontSize: 16,
-    color: '#333',
+    color: theme.text,
     marginLeft: 12,
   },
   settingRight: {
@@ -231,27 +226,13 @@ const styles = StyleSheet.create({
   },
   settingValue: {
     fontSize: 14,
-    color: '#999',
+    color: theme.textTertiary,
     marginRight: 8,
   },
-  settingValueLink: {
-    fontSize: 14,
-    color: '#6200ee',
-    marginRight: 8,
+  bottomSpacing: {
+    height: 40,
   },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  addButtonText: {
-    fontSize: 16,
-    color: '#6200ee',
-    marginLeft: 8,
-    fontWeight: '600',
-  },
+
   logoutButton: {
     backgroundColor: '#fff',
     marginHorizontal: 16,
@@ -260,10 +241,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ff3b30',
+    borderColor: theme.error,
   },
   logoutButtonText: {
-    color: '#ff3b30',
+    color: theme.error,
     fontSize: 16,
     fontWeight: 'bold',
   },
