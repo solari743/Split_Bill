@@ -8,6 +8,7 @@ const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
   const { theme } = useTheme();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   return (
     <Stack.Navigator>
