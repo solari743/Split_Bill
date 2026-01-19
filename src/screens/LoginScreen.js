@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, StatusBar, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
-import Wavify from '../components/wavify';
+import Wave from '../components/wavify';
 
-export default function Login ({ navigation, onLogin }) {
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+export default function LoginScreen({ navigation, onLogin }) {
     const { theme, isDark } = useTheme();
-    const stlyes = createStyles(theme);
+    const styles = createStyles(theme);
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -14,43 +16,50 @@ export default function Login ({ navigation, onLogin }) {
     const [isEmailFocused, setIsEmailFocused] = useState(false);
     const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
-    const handle_login = () => {
+    const handleLogin = () => {
         console.log('Login', email, password);
+        // Add your authentication logic here
+        // For now, just navigate to the main app
+        if (onLogin) {
+            onLogin();
+        }
     };
 
-    const handle_SocialLogin = (provider) => {
-        console.log( 'Login with ${provider}' )
+    const handleSocialLogin = (provider) => {
+        console.log(`Login with ${provider}`);
+        // Add your social login logic here
+        // For now, just navigate to the main app
+        if (onLogin) {
+            onLogin();
+        }
     };
 
   return (
     <View style={styles.container}>
-      <Wavify
-        fill="rgba(0, 200, 5, 0.08)"
-        options={{
-          height: 100,
-          amplitude: 30,
-          speed: 0.1,
-          points: 4,
-        }}
-      />
-      <Wavify
-        fill="rgba(0, 200, 5, 0.12)"
-        options={{
-          height: 140,
-          amplitude: 25,
-          speed: 0.15,
-          points: 3,
-        }}
-      />
-      <Wavify
-        fill="rgba(0, 200, 5, 0.15)"
-        options={{
-          height: 180,
-          amplitude: 20,
-          speed: 0.2,
-          points: 5,
-        }}
-      />
+      {/* Background Waves - Positioned absolutely to stay in background */}
+      <View style={styles.wavesContainer}>
+        <View style={styles.wave1}>
+          <Wave
+            width={SCREEN_WIDTH}
+            height={SCREEN_HEIGHT * 0.3}
+            color="rgba(0, 200, 5, 0.08)"
+          />
+        </View>
+        <View style={styles.wave2}>
+          <Wave
+            width={SCREEN_WIDTH}
+            height={SCREEN_HEIGHT * 0.35}
+            color="rgba(0, 200, 5, 0.12)"
+          />
+        </View>
+        <View style={styles.wave3}>
+          <Wave
+            width={SCREEN_WIDTH}
+            height={SCREEN_HEIGHT * 0.4}
+            color="rgba(0, 200, 5, 0.15)"
+          />
+        </View>
+      </View>
       
       <KeyboardAvoidingView
         style={styles.keyboardView}
@@ -68,7 +77,6 @@ export default function Login ({ navigation, onLogin }) {
               <Ionicons name="wallet" size={48} color={theme.primary} />
             </View>
             <Text style={styles.title}>Split Bill</Text>
-            <Text style={styles.subtitle}>Welcome back</Text>
           </View>
 
           {/* Login Form */}
@@ -211,8 +219,42 @@ const createStyles = (theme) => StyleSheet.create({
     flex: 1,
     backgroundColor: theme.background,
   },
+  
+  // Waves Background Styling
+  wavesContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 0,
+    overflow: 'hidden',
+  },
+  wave1: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    opacity: 1,
+  },
+  wave2: {
+    position: 'absolute',
+    top: 50,
+    left: 0,
+    right: 0,
+    opacity: 1,
+  },
+  wave3: {
+    position: 'absolute',
+    top: 100,
+    left: 0,
+    right: 0,
+    opacity: 1,
+  },
+  
   keyboardView: {
     flex: 1,
+    zIndex: 1,
   },
   scrollContent: {
     flexGrow: 1,
