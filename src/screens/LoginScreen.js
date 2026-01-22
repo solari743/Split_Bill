@@ -18,8 +18,6 @@ export default function LoginScreen({ navigation, onLogin }) {
 
     const handleLogin = () => {
         console.log('Login', email, password);
-        // Add your authentication logic here
-        // For now, just navigate to the main app
         if (onLogin) {
             onLogin();
         }
@@ -27,8 +25,6 @@ export default function LoginScreen({ navigation, onLogin }) {
 
     const handleSocialLogin = (provider) => {
         console.log(`Login with ${provider}`);
-        // Add your social login logic here
-        // For now, just navigate to the main app
         if (onLogin) {
             onLogin();
         }
