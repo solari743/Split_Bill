@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+}
+
+enum SplitMode {
+  EVEN
+  ITEMIZED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+}
+
+model User {
+  id             String           @id @default(cuid())
+  email          String           @unique
+  name           String?
+  phone          String?
+  passwordHash   String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  identities     AuthIdentity[]
+  refreshTokens  RefreshSession[]
+  receiptDrafts  ReceiptDraft[]
+  bills          Bill[]
+}
+
+model AuthIdentity {
+  id             String       @id @default(cuid())
+  provider       AuthProvider
+  providerUserId String
+  userId         String
+  createdAt      DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+}
+
+model RefreshSession {
+  id           String    @id @default(cuid())
+  tokenHash    String    @unique
+  userId       String
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ReceiptDraft {
+  id             String             @id @default(cuid())
+  userId         String
+  merchant       String
+  receiptDate    DateTime?
+  subtotalCents  Int
+  taxCents       Int
+  tipCents       Int
+  feesCents      Int
+  totalCents     Int
+  confidence     Float
+  rawText        String?
+  imagePath      String?
+  confirmedAt    DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items          ReceiptItemDraft[]
+  bill           Bill?
+}
+
+model ReceiptItemDraft {
+  id             String        @id @default(cuid())
+  receiptDraftId String
+  name           String
+  quantity       Int           @default(1)
+  unitCents      Int
+  totalCents     Int
+  createdAt      DateTime      @default(now())
+  receiptDraft   ReceiptDraft  @relation(fields: [receiptDraftId], references: [id], onDelete: Cascade)
+}
+
+model Bill {
+  id             String               @id @default(cuid())
+  userId         String
+  receiptDraftId String?              @unique
+  title          String
+  splitMode      SplitMode
+  subtotalCents  Int
+  taxCents       Int
+  tipCents       Int
+  feesCents      Int
+  totalCents     Int
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  receiptDraft   ReceiptDraft?        @relation(fields: [receiptDraftId], references: [id], onDelete: SetNull)
+  items          BillItem[]
+  participants   BillParticipant[]
+  statusEvents   PaymentStatusEvent[]
+}
+
+model BillItem {
+  id             String               @id @default(cuid())
+  billId         String
+  receiptItemId  String?
+  name           String
+  quantity       Int                  @default(1)
+  totalCents     Int
+  bill           Bill                 @relation(fields: [billId], references: [id], onDelete: Cascade)
+  assignments    BillItemAssignment[]
+}
+
+model BillParticipant {
+  id             String               @id @default(cuid())
+  billId         String
+  name           String
+  phone          String?
+  amountCents    Int
+  paidCents      Int                  @default(0)
+  status         PaymentStatus        @default(PENDING)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  bill           Bill                 @relation(fields: [billId], references: [id], onDelete: Cascade)
+  assignments    BillItemAssignment[]
+  statusEvents   PaymentStatusEvent[]
+}
+
+model BillItemAssignment {
+  id             String           @id @default(cuid())
+  billItemId     String
+  participantId  String
+  shareCents     Int
+  billItem        BillItem         @relation(fields: [billItemId], references: [id], onDelete: Cascade)
+  participant     BillParticipant  @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([billItemId, participantId])
+}
+
+model PaymentStatusEvent {
+  id             String           @id @default(cuid())
+  billId         String
+  participantId  String
+  status         PaymentStatus
+  amountCents    Int
+  note           String?
+  createdAt      DateTime         @default(now())
+  bill           Bill             @relation(fields: [billId], references: [id], onDelete: Cascade)
+  participant    BillParticipant  @relation(fields: [participantId], references: [id], onDelete: Cascade)
+}

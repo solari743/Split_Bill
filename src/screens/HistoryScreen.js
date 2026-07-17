@@ -1,257 +1,135 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { apiRequest } from '../api/client';
+import { useTheme } from '../context/ThemeContext';
+import { formatCurrency, StatusBadge } from '../components/FinanceUI';
 
-export default function HistoryScreen() {
-  const bills = [
-    {
-      id: '1',
-      name: 'Pizza Night',
-      date: 'Jan 5, 2026',
-      amount: 48.50,
-      people: 4,
-      status: 'settled',
-      category: 'restaurant',
-    },
-    {
-      id: '2',
-      name: 'Movie Tickets',
-      date: 'Jan 3, 2026',
-      amount: 60.00,
-      people: 3,
-      status: 'pending',
-      category: 'film',
-    },
-    {
-      id: '3',
-      name: 'Utilities - December',
-      date: 'Dec 28, 2025',
-      amount: 150.00,
-      people: 2,
-      status: 'settled',
-      category: 'home',
-    },
-    {
-      id: '4',
-      name: 'Groceries',
-      date: 'Dec 20, 2025',
-      amount: 85.30,
-      people: 3,
-      status: 'settled',
-      category: 'cart',
-    },
-  ];
+export default function HistoryScreen({ navigation }) {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+  const [bills, setBills] = useState([]);
 
-  const renderBill = ({ item }) => (
-    <TouchableOpacity style={styles.billCard}>
-      <View style={styles.billIcon}>
-        <Ionicons name={item.category} size={24} color="#6200ee" />
-      </View>
-      <View style={styles.billInfo}>
-        <Text style={styles.billName}>{item.name}</Text>
-        <Text style={styles.billDate}>
-          {item.date} • {item.people} people
-        </Text>
-      </View>
-      <View style={styles.billAmount}>
-        <Text style={styles.billTotal}>${item.amount.toFixed(2)}</Text>
-        <View
-          style={[
-            styles.statusBadge,
-            item.status === 'settled' ? styles.statusSettled : styles.statusPending,
-          ]}
-        >
-          <Text
-            style={[
-              styles.statusText,
-              item.status === 'settled' ? styles.statusTextSettled : styles.statusTextPending,
-            ]}
-          >
-            {item.status === 'settled' ? '✓ Settled' : '⏳ Pending'}
-          </Text>
+  useEffect(() => {
+    const loadBills = async () => {
+      try {
+        const data = await apiRequest('/bills');
+        setBills(data.bills);
+      } catch {
+        setBills([]);
+      }
+    };
+
+    const unsubscribe = navigation.addListener('focus', loadBills);
+    return unsubscribe;
+  }, [navigation]);
+
+  const totalTracked = bills.reduce((sum, bill) => sum + Number(bill.total || 0), 0);
+  const openBills = bills.filter((bill) => bill.participants.some((participant) => participant.status !== 'paid')).length;
+
+  const renderBill = ({ item }) => {
+    const settled = item.participants.every((participant) => participant.status === 'paid');
+    return (
+      <TouchableOpacity style={styles.billRow} onPress={() => navigation.navigate('BillDetail', { billId: item.id })}>
+        <View style={styles.iconCircle}>
+          <Ionicons name="receipt-outline" size={20} color={theme.primary} />
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+        <View style={styles.billInfo}>
+          <Text style={styles.billName} numberOfLines={1}>{item.title}</Text>
+          <Text style={styles.billMeta}>{new Date(item.createdAt).toLocaleDateString()} - {item.participants.length} people</Text>
+        </View>
+        <View style={styles.billRight}>
+          <Text style={styles.billTotal}>{formatCurrency(item.total)}</Text>
+          <StatusBadge status={settled ? 'settled' : 'pending'} />
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
-      {/* Filter Bar */}
-      <View style={styles.filterBar}>
-        <TouchableOpacity style={styles.filterButton}>
-          <Text style={styles.filterText}>All</Text>
-          <Ionicons name="chevron-down" size={16} color="#666" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.filterButton}>
-          <Text style={styles.filterText}>2026</Text>
-          <Ionicons name="chevron-down" size={16} color="#666" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton}>
-          <Ionicons name="search" size={20} color="#666" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Summary Stats */}
-      <View style={styles.summaryCard}>
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Total Bills</Text>
-          <Text style={styles.summaryValue}>{bills.length}</Text>
+      <View style={styles.summary}>
+        <View>
+          <Text style={styles.summaryLabel}>Total tracked</Text>
+          <Text style={styles.summaryValue}>{formatCurrency(totalTracked)}</Text>
         </View>
-        <View style={styles.summaryDivider} />
-        <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Total Spent</Text>
-          <Text style={styles.summaryValue}>
-            ${bills.reduce((sum, bill) => sum + bill.amount, 0).toFixed(2)}
-          </Text>
+        <View style={styles.summaryPill}>
+          <Text style={styles.summaryPillText}>{openBills} open</Text>
         </View>
       </View>
 
-      {/* Bills List */}
       <FlatList
         data={bills}
         renderItem={renderBill}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ListEmptyComponent={(
+          <View style={styles.emptyState}>
+            <Ionicons name="archive-outline" size={26} color={theme.textTertiary} />
+            <Text style={styles.emptyTitle}>No history yet</Text>
+            <Text style={styles.emptyText}>Confirmed bills will appear here.</Text>
+          </View>
+        )}
         showsVerticalScrollIndicator={false}
       />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  filterBar: {
-    flexDirection: 'row',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#f5f5f5',
+const createStyles = (theme) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: theme.background },
+  summary: {
+    margin: 20,
+    marginBottom: 14,
+    padding: 18,
     borderRadius: 8,
-    marginRight: 8,
-  },
-  filterText: {
-    fontSize: 14,
-    color: '#666',
-    marginRight: 4,
-  },
-  iconButton: {
-    padding: 8,
-    marginLeft: 'auto',
-  },
-  summaryCard: {
+    borderWidth: 1,
+    borderColor: theme.border,
+    backgroundColor: theme.card,
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    margin: 16,
-    padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  summaryItem: {
-    flex: 1,
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  summaryDivider: {
-    width: 1,
-    backgroundColor: '#e0e0e0',
-  },
-  summaryLabel: {
-    fontSize: 14,
-    color: '#999',
-    marginBottom: 8,
-  },
-  summaryValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  listContainer: {
-    padding: 16,
-    paddingTop: 0,
-  },
-  billCard: {
-    backgroundColor: '#fff',
+  summaryLabel: { color: theme.textTertiary, fontSize: 13, fontWeight: '700', textTransform: 'uppercase' },
+  summaryValue: { color: theme.text, fontSize: 30, fontWeight: '800', marginTop: 4 },
+  summaryPill: { backgroundColor: theme.cardAccentDark || theme.cardAccent, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },
+  summaryPillText: { color: theme.primary, fontWeight: '800' },
+  listContainer: { marginHorizontal: 20, paddingBottom: 28, borderRadius: 8, overflow: 'hidden' },
+  billRow: {
+    minHeight: 74,
     flexDirection: 'row',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    alignItems: 'center',
+    backgroundColor: theme.card,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: theme.border,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
-  billIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#f0e6ff',
+  separator: { height: 1, backgroundColor: theme.divider, marginHorizontal: 20 },
+  iconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: theme.cardAccentDark || theme.cardAccent,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
     marginRight: 12,
   },
-  billInfo: {
-    flex: 1,
-    justifyContent: 'center',
+  billInfo: { flex: 1, minWidth: 0 },
+  billName: { color: theme.text, fontSize: 16, fontWeight: '800' },
+  billMeta: { color: theme.textTertiary, fontSize: 13, marginTop: 3 },
+  billRight: { alignItems: 'flex-end', marginLeft: 10 },
+  billTotal: { color: theme.text, fontWeight: '800', marginBottom: 6 },
+  emptyState: {
+    alignItems: 'center',
+    padding: 28,
+    backgroundColor: theme.card,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.border,
   },
-  billName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  billDate: {
-    fontSize: 14,
-    color: '#999',
-  },
-  billAmount: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  },
-  billTotal: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 6,
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  statusSettled: {
-    backgroundColor: '#e8f5e9',
-  },
-  statusPending: {
-    backgroundColor: '#fff3e0',
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  statusTextSettled: {
-    color: '#2e7d32',
-  },
-  statusTextPending: {
-    color: '#f57c00',
-  },
+  emptyTitle: { color: theme.text, fontWeight: '800', marginTop: 8 },
+  emptyText: { color: theme.textTertiary, marginTop: 4 },
 });

@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: split_bill
+      POSTGRES_PASSWORD: split_bill_password
+      POSTGRES_DB: split_bill
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U split_bill -d split_bill"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./server
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://split_bill:split_bill_password@db:5432/split_bill?schema=public
+      JWT_SECRET: docker-demo-secret-change-before-production-please
+      REFRESH_TOKEN_DAYS: 30
+      CORS_ORIGIN: http://localhost:8081,http://localhost:19006,http://localhost:4000
+      UPLOAD_DIR: /app/uploads
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      RECEIPT_PROVIDER_API_KEY: ${RECEIPT_PROVIDER_API_KEY:-}
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - receipt_uploads:/app/uploads
+
+volumes:
+  postgres_data:
+  receipt_uploads:

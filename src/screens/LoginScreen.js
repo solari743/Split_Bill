@@ -1,209 +1,185 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, StatusBar, Dimensions } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
 import { useTheme } from '../context/ThemeContext';
-import Wave from '../components/wavify';
+import { useAuth } from '../context/AuthContext';
+import { getApiUrl } from '../api/client';
+import { Field, PrimaryButton, SecondaryButton } from '../components/FinanceUI';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+WebBrowser.maybeCompleteAuthSession();
 
-export default function LoginScreen({ navigation, onLogin }) {
-    const { theme, isDark } = useTheme();
-    const styles = createStyles(theme);
+export default function LoginScreen() {
+  const { theme, isDark } = useTheme();
+  const { login, register, loginWithGoogle } = useAuth();
+  const styles = createStyles(theme);
 
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [isEmailFocused, setIsEmailFocused] = useState(false);
-    const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [focused, setFocused] = useState(null);
+  const googleConfigured = Boolean(process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID);
 
-    const handleLogin = () => {
-        console.log('Login', email, password);
-        if (onLogin) {
-            onLogin();
+  const [googleRequest, googleResponse, promptGoogle] = Google.useIdTokenAuthRequest({
+    clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || 'not-configured',
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+  });
+
+  useEffect(() => {
+    const runGoogleLogin = async () => {
+      if (googleResponse?.type === 'success' && googleResponse.params?.id_token) {
+        try {
+          setLoading(true);
+          await loginWithGoogle(googleResponse.params.id_token);
+        } catch (error) {
+          Alert.alert('Google sign-in failed', error.message);
+        } finally {
+          setLoading(false);
         }
+      }
     };
 
-    const handleSocialLogin = (provider) => {
-        console.log(`Login with ${provider}`);
-        if (onLogin) {
-            onLogin();
-        }
-    };
+    runGoogleLogin();
+  }, [googleResponse]);
+
+  const handleSubmit = async () => {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      Alert.alert('Email required', 'Enter an email address to continue.');
+      return;
+    }
+    if (isSignUp && password.length < 8) {
+      Alert.alert('Password too short', 'Use at least 8 characters for the demo account password.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      if (isSignUp) {
+        await register({ email: trimmedEmail, password, name, phone });
+      } else {
+        await login(trimmedEmail, password);
+      }
+    } catch (error) {
+      Alert.alert(isSignUp ? 'Sign up failed' : 'Sign in failed', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
-      {/* Background Waves - Positioned absolutely to stay in background */}
-      <View style={styles.wavesContainer}>
-        <View style={styles.wave1}>
-          <Wave
-            width={SCREEN_WIDTH}
-            height={SCREEN_HEIGHT * 0.3}
-            color="rgba(0, 200, 5, 0.08)"
-          />
-        </View>
-        <View style={styles.wave2}>
-          <Wave
-            width={SCREEN_WIDTH}
-            height={SCREEN_HEIGHT * 0.35}
-            color="rgba(0, 200, 5, 0.12)"
-          />
-        </View>
-        <View style={styles.wave3}>
-          <Wave
-            width={SCREEN_WIDTH}
-            height={SCREEN_HEIGHT * 0.4}
-            color="rgba(0, 200, 5, 0.15)"
-          />
-        </View>
-      </View>
-      
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Logo/Brand Section */}
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+      <KeyboardAvoidingView style={styles.keyboardView} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <View style={styles.logoContainer}>
-              <Ionicons name="wallet" size={48} color={theme.primary} />
+              <Ionicons name="receipt-outline" size={30} color="#000" />
             </View>
             <Text style={styles.title}>Split Bill</Text>
+            <Text style={styles.subtitle}>Scan receipts, split totals, and track every open tab.</Text>
           </View>
 
-          {/* Login Form */}
-          <View style={styles.formContainer}>
-            {/* Email Input */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Email</Text>
-              <View style={[
-                styles.inputContainer,
-                isEmailFocused && styles.inputContainerFocused
-              ]}>
-                <Ionicons
-                  name="mail-outline"
-                  size={20}
-                  color={isEmailFocused ? theme.primary : theme.textTertiary}
-                  style={styles.inputIcon}
+          <View style={styles.formCard}>
+            {isSignUp && (
+              <>
+                <Field
+                  icon="person-outline"
+                  label="Name"
+                  value={name}
+                  onChangeText={setName}
+                  onFocus={() => setFocused('name')}
+                  onBlur={() => setFocused(null)}
+                  focused={focused === 'name'}
+                  autoCapitalize="words"
+                  placeholder="Your name"
+                  containerStyle={styles.fieldSpacing}
                 />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your email"
-                  placeholderTextColor={theme.textTertiary}
-                  value={email}
-                  onChangeText={setEmail}
-                  onFocus={() => setIsEmailFocused(true)}
-                  onBlur={() => setIsEmailFocused(false)}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
+                <Field
+                  icon="call-outline"
+                  label="Phone"
+                  value={phone}
+                  onChangeText={setPhone}
+                  onFocus={() => setFocused('phone')}
+                  onBlur={() => setFocused(null)}
+                  focused={focused === 'phone'}
+                  keyboardType="phone-pad"
+                  placeholder="Optional"
+                  containerStyle={styles.fieldSpacing}
                 />
-              </View>
+              </>
+            )}
+
+            <Field
+              icon="mail-outline"
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              onFocus={() => setFocused('email')}
+              onBlur={() => setFocused(null)}
+              focused={focused === 'email'}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder="you@example.com"
+              containerStyle={styles.fieldSpacing}
+            />
+
+            <View style={styles.fieldSpacing}>
+              <Field
+                icon="lock-closed-outline"
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                onFocus={() => setFocused('password')}
+                onBlur={() => setFocused(null)}
+                focused={focused === 'password'}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                autoCorrect={false}
+                placeholder="8+ characters"
+              />
+              <TouchableOpacity style={styles.passwordToggle} onPress={() => setShowPassword((value) => !value)}>
+                <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color={theme.textTertiary} />
+              </TouchableOpacity>
             </View>
 
-            {/* Password Input */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Password</Text>
-              <View style={[
-                styles.inputContainer,
-                isPasswordFocused && styles.inputContainerFocused
-              ]}>
-                <Ionicons
-                  name="lock-closed-outline"
-                  size={20}
-                  color={isPasswordFocused ? theme.primary : theme.textTertiary}
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your password"
-                  placeholderTextColor={theme.textTertiary}
-                  value={password}
-                  onChangeText={setPassword}
-                  onFocus={() => setIsPasswordFocused(true)}
-                  onBlur={() => setIsPasswordFocused(false)}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeIcon}
-                >
-                  <Ionicons
-                    name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                    size={20}
-                    color={theme.textTertiary}
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
+            <PrimaryButton
+              label={isSignUp ? 'Create account' : 'Sign in'}
+              icon={isSignUp ? 'person-add-outline' : 'log-in-outline'}
+              loading={loading}
+              onPress={handleSubmit}
+              style={styles.submitButton}
+            />
 
-            {/* Forgot Password */}
-            <TouchableOpacity style={styles.forgotPassword}>
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
-
-            {/* Login Button */}
-            <TouchableOpacity
-              style={styles.loginButton}
-              onPress={handleLogin}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.loginButtonText}>Sign In</Text>
-            </TouchableOpacity>
-
-            {/* Divider */}
-            <View style={styles.dividerContainer}>
+            <View style={styles.dividerRow}>
               <View style={styles.divider} />
-              <Text style={styles.dividerText}>or continue with</Text>
+              <Text style={styles.dividerText}>or</Text>
               <View style={styles.divider} />
             </View>
 
-            {/* Social Login Buttons */}
-            <View style={styles.socialContainer}>
-              <TouchableOpacity
-                style={styles.socialButton}
-                onPress={() => handleSocialLogin('Google')}
-              >
-                <Ionicons name="logo-google" size={24} color={theme.text} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.socialButton}
-                onPress={() => handleSocialLogin('Apple')}
-              >
-                <Ionicons name="logo-apple" size={24} color={theme.text} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.socialButton}
-                onPress={() => handleSocialLogin('Facebook')}
-              >
-                <Ionicons name="logo-facebook" size={24} color={theme.text} />
-              </TouchableOpacity>
-            </View>
+            <SecondaryButton
+              label={googleConfigured ? 'Continue with Google' : 'Google not configured'}
+              icon="logo-google"
+              onPress={() => promptGoogle()}
+              disabled={!googleConfigured || !googleRequest || loading}
+            />
           </View>
 
-          {/* Sign Up Link */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-              <Text style={styles.signUpText}>Sign Up</Text>
+          <View style={styles.switchRow}>
+            <Text style={styles.switchText}>{isSignUp ? 'Already have an account?' : "Don't have an account?"}</Text>
+            <TouchableOpacity onPress={() => setIsSignUp((value) => !value)}>
+              <Text style={styles.switchLink}>{isSignUp ? 'Sign in' : 'Sign up'}</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Terms */}
-          <Text style={styles.termsText}>
-            By continuing, you agree to our{' '}
-            <Text style={styles.termsLink}>Terms of Service</Text>
-            {' '}and{' '}
-            <Text style={styles.termsLink}>Privacy Policy</Text>
-          </Text>
+          <Text style={styles.debugText}>API: {getApiUrl()}</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -211,218 +187,36 @@ export default function LoginScreen({ navigation, onLogin }) {
 }
 
 const createStyles = (theme) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.background,
-  },
-  
-  // Waves Background Styling
-  wavesContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 0,
-    overflow: 'hidden',
-  },
-  wave1: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    opacity: 1,
-  },
-  wave2: {
-    position: 'absolute',
-    top: 50,
-    left: 0,
-    right: 0,
-    opacity: 1,
-  },
-  wave3: {
-    position: 'absolute',
-    top: 100,
-    left: 0,
-    right: 0,
-    opacity: 1,
-  },
-  
-  keyboardView: {
-    flex: 1,
-    zIndex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 40,
-  },
-
-  // Header
-  header: {
-    alignItems: 'center',
-    marginBottom: 48,
-  },
+  container: { flex: 1, backgroundColor: theme.background },
+  keyboardView: { flex: 1 },
+  scrollContent: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 60, paddingBottom: 32 },
+  header: { marginBottom: 28 },
   logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: theme.cardAccentDark,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: theme.text,
-    marginBottom: 8,
-    letterSpacing: -0.5,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: theme.textSecondary,
-    letterSpacing: 0.5,
-  },
-
-  // Form
-  formContainer: {
-    marginBottom: 32,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.text,
-    marginBottom: 8,
-    letterSpacing: 0.3,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.card,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: theme.border,
-    paddingHorizontal: 16,
-    height: 56,
-  },
-  inputContainerFocused: {
-    borderColor: theme.primary,
-    backgroundColor: theme.cardDark,
-  },
-  inputIcon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: theme.text,
-    height: '100%',
-  },
-  eyeIcon: {
-    padding: 4,
-  },
-
-  // Forgot Password
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 24,
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    color: theme.primary,
-    fontWeight: '500',
-  },
-
-  // Login Button
-  loginButton: {
+    width: 54,
+    height: 54,
+    borderRadius: 8,
     backgroundColor: theme.primary,
-    height: 56,
-    borderRadius: 12,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
-    shadowColor: theme.primary,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  loginButtonText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#000',
-    letterSpacing: 0.5,
-  },
-
-  // Divider
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: theme.border,
-  },
-  dividerText: {
-    fontSize: 13,
-    color: theme.textTertiary,
-    marginHorizontal: 16,
-  },
-
-  // Social Login
-  socialContainer: {
-    flexDirection: 'row',
     justifyContent: 'center',
-    gap: 16,
+    marginBottom: 18,
   },
-  socialButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  title: { fontSize: 36, fontWeight: '800', color: theme.text },
+  subtitle: { color: theme.textSecondary, fontSize: 16, lineHeight: 22, marginTop: 8, maxWidth: 360 },
+  formCard: {
     backgroundColor: theme.card,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: theme.border,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: 8,
+    padding: 16,
   },
-
-  // Footer
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 'auto',
-    marginBottom: 16,
-  },
-  footerText: {
-    fontSize: 15,
-    color: theme.textSecondary,
-  },
-  signUpText: {
-    fontSize: 15,
-    color: theme.primary,
-    fontWeight: '600',
-  },
-
-  // Terms
-  termsText: {
-    fontSize: 12,
-    color: theme.textTertiary,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  termsLink: {
-    color: theme.primary,
-    fontWeight: '500',
-  },
+  fieldSpacing: { marginBottom: 16 },
+  passwordToggle: { position: 'absolute', right: 14, bottom: 15, padding: 4 },
+  submitButton: { marginTop: 4 },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 18 },
+  divider: { flex: 1, height: 1, backgroundColor: theme.divider },
+  dividerText: { color: theme.textTertiary, marginHorizontal: 12, fontWeight: '700' },
+  switchRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 20, gap: 6 },
+  switchText: { color: theme.textSecondary },
+  switchLink: { color: theme.primary, fontWeight: '800' },
+  debugText: { color: theme.textTertiary, textAlign: 'center', fontSize: 11, marginTop: 18 },
 });
