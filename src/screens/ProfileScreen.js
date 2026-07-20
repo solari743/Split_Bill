@@ -1,118 +1,245 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Switch,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import { Divider, Row, Section } from '../components/FinanceUI';
 
 export default function ProfileScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const styles = createStyles(theme);
+
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
+    <ScrollView style={styles.container}>
+      <View style={styles.profileHeader}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{(user?.name || user?.email || 'S').charAt(0).toUpperCase()}</Text>
+          <Ionicons name="person" size={48} color={theme.primary} />
         </View>
-        <View style={styles.headerText}>
-          <Text style={styles.name}>{user?.name || 'Split Bill User'}</Text>
-          <Text style={styles.email}>{user?.email}</Text>
+        <Text style={styles.name}>{user?.name || 'Split Bill User'}</Text>
+        <Text style={styles.email}>{user?.email}</Text>
+        <TouchableOpacity style={styles.editButton}>
+          <Text style={styles.editButtonText}>Edit Profile</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Appearance</Text>
+
+        <View style={styles.settingItem}>
+          <View style={styles.settingLeft}>
+            <Ionicons
+              name={isDark ? 'moon' : 'sunny'}
+              size={24}
+              color={theme.textSecondary}
+            />
+            <Text style={styles.settingText}>Dark Mode</Text>
+          </View>
+          <Switch
+            value={isDark}
+            onValueChange={toggleTheme}
+            trackColor={{ false: '#d1d1d6', true: theme.primaryLight }}
+            thumbColor={isDark ? theme.primary : '#f4f3f4'}
+          />
         </View>
       </View>
 
-      <Section title="Appearance">
-        <Row
-          icon={isDark ? 'moon-outline' : 'sunny-outline'}
-          title="Dark mode"
-          subtitle={isDark ? 'Dark finance theme' : 'Light finance theme'}
-          right={(
-            <Switch
-              value={isDark}
-              onValueChange={toggleTheme}
-              trackColor={{ false: theme.border, true: theme.primaryLight }}
-              thumbColor={isDark ? theme.primary : '#ffffff'}
-            />
-          )}
-        />
-      </Section>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Preferences</Text>
 
-      <Section title="Preferences">
-        <Row icon="cash-outline" title="Currency" subtitle="United States Dollar" right={<Text style={styles.settingValue}>USD</Text>} />
-        <Divider />
-        <Row
-          icon="notifications-outline"
-          title="Notifications"
-          subtitle="Payment reminders and tab updates"
-          right={(
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
-              trackColor={{ false: theme.border, true: theme.primaryLight }}
-              thumbColor={notificationsEnabled ? theme.primary : '#ffffff'}
-            />
-          )}
-        />
-      </Section>
-
-      <Section title="Payment Methods">
-        {['Zelle', 'Venmo', 'PayPal'].map((method, index, arr) => (
-          <View key={method}>
-            <Row icon="card-outline" title={method} subtitle="Not linked for demo" right={<Text style={styles.linkText}>Link</Text>} />
-            {index < arr.length - 1 && <Divider />}
+        <TouchableOpacity style={styles.settingItem}>
+          <View style={styles.settingLeft}>
+            <Ionicons name="cash-outline" size={24} color={theme.textSecondary} />
+            <Text style={styles.settingText}>Currency</Text>
           </View>
-        ))}
-      </Section>
-
-      <Section title="Data & Privacy">
-        {['Export Data', 'Privacy Policy'].map((item, index, arr) => (
-          <View key={item}>
-            <Row icon="shield-checkmark-outline" title={item} subtitle="Demo account controls" right={<Ionicons name="chevron-forward" size={18} color={theme.textTertiary} />} />
-            {index < arr.length - 1 && <Divider />}
+          <View style={styles.settingRight}>
+            <Text style={styles.settingValue}>USD</Text>
+            <Ionicons name="chevron-forward" size={20} color={theme.textTertiary} />
           </View>
+        </TouchableOpacity>
+
+        <View style={styles.settingItem}>
+          <View style={styles.settingLeft}>
+            <Ionicons
+              name="notifications-outline"
+              size={24}
+              color={theme.textSecondary}
+            />
+            <Text style={styles.settingText}>Notifications</Text>
+          </View>
+          <Switch
+            value={notificationsEnabled}
+            onValueChange={setNotificationsEnabled}
+            trackColor={{ false: '#d1d1d6', true: theme.primaryLight }}
+            thumbColor={notificationsEnabled ? theme.primary : '#f4f3f4'}
+          />
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Payment Methods</Text>
+
+        {['Venmo', 'PayPal'].map((method) => (
+          <TouchableOpacity key={method} style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="card-outline" size={24} color={theme.textSecondary} />
+              <Text style={styles.settingText}>{method}</Text>
+            </View>
+            <View style={styles.settingRight}>
+              <Text style={[styles.settingValue, { color: theme.primary }]}>
+                Link
+              </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={theme.textTertiary}
+              />
+            </View>
+          </TouchableOpacity>
         ))}
-      </Section>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Data & Privacy</Text>
+
+        {['Export Data', 'Privacy Policy'].map((item) => (
+          <TouchableOpacity key={item} style={styles.settingItem}>
+            <View style={styles.settingLeft}>
+              <Ionicons
+                name="shield-outline"
+                size={24}
+                color={theme.textSecondary}
+              />
+              <Text style={styles.settingText}>{item}</Text>
+            </View>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={theme.textTertiary}
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
 
       <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-        <Ionicons name="log-out-outline" size={18} color={theme.error} />
-        <Text style={styles.logoutButtonText}>Log out</Text>
+        <Text style={styles.logoutButtonText}>Logout</Text>
       </TouchableOpacity>
+
+      <View style={styles.bottomSpacing} />
     </ScrollView>
   );
 }
 
 const createStyles = (theme) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.background },
-  content: { paddingTop: 22, paddingBottom: 36 },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginBottom: 26 },
-  avatar: {
-    width: 58,
-    height: 58,
-    borderRadius: 8,
-    backgroundColor: theme.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
+  container: {
+    flex: 1,
+    backgroundColor: theme.background,
   },
-  avatarText: { color: '#000', fontSize: 24, fontWeight: '800' },
-  headerText: { flex: 1, minWidth: 0 },
-  name: { color: theme.text, fontSize: 22, fontWeight: '800' },
-  email: { color: theme.textTertiary, marginTop: 4 },
-  settingValue: { color: theme.textSecondary, fontWeight: '800' },
-  linkText: { color: theme.primary, fontWeight: '800' },
+  profileHeader: {
+    backgroundColor: theme.card,
+    alignItems: 'center',
+    padding: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.border,
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: theme.cardAccent,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  name: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: theme.text,
+    marginBottom: 4,
+  },
+  email: {
+    fontSize: 14,
+    color: theme.textTertiary,
+    marginBottom: 16,
+  },
+  editButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: theme.primary,
+  },
+  editButtonText: {
+    color: theme.primary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  section: {
+    marginTop: 24,
+    backgroundColor: theme.card,
+    paddingVertical: 8,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.textTertiary,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 8,
+    textTransform: 'uppercase',
+  },
+  settingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.background,
+  },
+  settingLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  settingText: {
+    fontSize: 16,
+    color: theme.text,
+    marginLeft: 12,
+  },
+  settingRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  settingValue: {
+    fontSize: 14,
+    color: theme.textTertiary,
+    marginRight: 8,
+  },
+  bottomSpacing: {
+    height: 40,
+  },
   logoutButton: {
-    marginHorizontal: 20,
-    minHeight: 52,
-    borderRadius: 8,
+    backgroundColor: '#fff',
+    marginHorizontal: 16,
+    marginTop: 24,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: theme.error,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 8,
-    backgroundColor: theme.card,
   },
-  logoutButtonText: { color: theme.error, fontSize: 16, fontWeight: '800' },
+  logoutButtonText: {
+    color: theme.error,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });

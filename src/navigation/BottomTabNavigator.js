@@ -18,9 +18,9 @@ export default function BottomTabNavigator() {
         tabBarActiveTintColor: theme.tabBarActive,
         tabBarInactiveTintColor: theme.tabBarInactive,
         tabBarStyle: {
-          height: 66,
-          paddingBottom: 10,
-          paddingTop: 10,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 8,
           backgroundColor: theme.tabBarBackground,
           borderTopWidth: 1,
           borderTopColor: theme.border,
@@ -38,7 +38,7 @@ export default function BottomTabNavigator() {
         },
         headerTintColor: theme.text,
         headerTitleStyle: {
-          fontWeight: '800',
+          fontWeight: '600',
           fontSize: 20,
         },
       }}
@@ -60,7 +60,7 @@ export default function BottomTabNavigator() {
         component={ScanReceiptScreen}
         options={{
           tabBarIcon: ({ color }) => (
-            <Ionicons name="scan-outline" size={30} color="#000" />
+            <Ionicons name="camera" size={32} color="#000" />
           ),
           tabBarLabel: '',
           tabBarButton: (props) => <CustomTabBarButton {...props} />,

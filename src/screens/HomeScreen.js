@@ -1,9 +1,8 @@
-import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { apiRequest } from '../api/client';
 import { useTheme } from '../context/ThemeContext';
-import { Divider, formatCurrency, MoneyText, Row, Section, StatusBadge } from '../components/FinanceUI';
 
 export default function HomeScreen({ navigation }) {
   const { theme } = useTheme();
@@ -12,13 +11,6 @@ export default function HomeScreen({ navigation }) {
 
   const recentBills = dashboard?.recentBills || [];
   const openParticipants = dashboard?.openParticipants || [];
-  const netBalance = Number(dashboard?.summary?.owedToYou || 0) - Number(dashboard?.summary?.youOwe || 0);
-
-  const summaryLabel = useMemo(() => {
-    if (netBalance > 0) return 'Net owed to you';
-    if (netBalance < 0) return 'Net you owe';
-    return 'All settled';
-  }, [netBalance]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -45,149 +37,199 @@ export default function HomeScreen({ navigation }) {
   }, [navigation]);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.hero}>
-        <Text style={styles.kicker}>Split Bill</Text>
-        <Text style={styles.balanceLabel}>{summaryLabel}</Text>
-        <MoneyText value={Math.abs(netBalance)} positive={netBalance > 0} negative={netBalance < 0} large />
-        <View style={styles.metrics}>
-          <View style={styles.metric}>
-            <Text style={styles.metricLabel}>Open tabs</Text>
-            <Text style={styles.metricValue}>{dashboard?.summary?.openTabs || 0}</Text>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <View style={styles.statsWrapper}>
+        <View style={styles.statCard}>
+          <View style={styles.statIconContainer}>
+            <Ionicons name="arrow-down" size={20} color={theme.error} />
           </View>
-          <View style={styles.metricDivider} />
-          <View style={styles.metric}>
-            <Text style={styles.metricLabel}>Owed to you</Text>
-            <Text style={[styles.metricValue, styles.positive]}>{formatCurrency(dashboard?.summary?.owedToYou)}</Text>
+          <View>
+            <Text style={styles.statLabel}>You Owe</Text>
+            <Text style={styles.statAmountNegative}>${Number(dashboard?.summary?.youOwe || 0).toFixed(2)}</Text>
           </View>
-          <View style={styles.metricDivider} />
-          <View style={styles.metric}>
-            <Text style={styles.metricLabel}>You owe</Text>
-            <Text style={[styles.metricValue, styles.negative]}>{formatCurrency(dashboard?.summary?.youOwe)}</Text>
+        </View>
+
+        <View style={styles.statCard}>
+          <View style={styles.statIconContainerGreen}>
+            <Ionicons name="arrow-up" size={20} color={theme.success} />
+          </View>
+          <View>
+            <Text style={styles.statLabel}>Owed to You</Text>
+            <Text style={styles.statAmountPositive}>${Number(dashboard?.summary?.owedToYou || 0).toFixed(2)}</Text>
           </View>
         </View>
       </View>
 
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('ScanReceipt')}>
-          <Ionicons name="scan-outline" size={20} color="#000" />
-          <Text style={styles.actionButtonText}>Scan receipt</Text>
+      <View style={styles.actionChips}>
+        <TouchableOpacity style={styles.chip} onPress={() => navigation.navigate('ScanReceipt')}>
+          <Ionicons name="receipt-outline" size={18} color={theme.primary} />
+          <Text style={styles.chipText}>New Bill</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.secondaryAction} onPress={() => navigation.navigate('History')}>
-          <Ionicons name="time-outline" size={20} color={theme.text} />
-          <Text style={styles.secondaryActionText}>History</Text>
+        <TouchableOpacity style={styles.chip} onPress={() => navigation.navigate('History')}>
+          <Ionicons name="time-outline" size={18} color={theme.primary} />
+          <Text style={styles.chipText}>History</Text>
         </TouchableOpacity>
       </View>
 
-      <Section
-        title="Recent Activity"
-        action={recentBills.length > 0 && (
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Recent Activity</Text>
           <TouchableOpacity onPress={() => navigation.navigate('History')}>
-            <Text style={styles.linkText}>See all</Text>
+            <Text style={styles.seeAll}>See All</Text>
           </TouchableOpacity>
-        )}
-      >
-        {recentBills.map((bill, index) => (
-          <View key={bill.id}>
-            <Row
-              icon="receipt-outline"
-              title={bill.title}
-              subtitle={`${new Date(bill.createdAt).toLocaleDateString()} - ${bill.people} people`}
-              onPress={() => navigation.navigate('BillDetail', { billId: bill.id })}
-              right={(
-                <>
-                  <Text style={styles.rowAmount}>{formatCurrency(bill.total)}</Text>
-                  <StatusBadge status={bill.status} />
-                </>
-              )}
-            />
-            {index < recentBills.length - 1 && <Divider />}
-          </View>
-        ))}
-        {recentBills.length === 0 && (
-          <View style={styles.emptyState}>
-            <Ionicons name="receipt-outline" size={24} color={theme.textTertiary} />
-            <Text style={styles.emptyTitle}>No bills yet</Text>
-            <Text style={styles.emptyText}>Scan a receipt to start tracking who owes what.</Text>
-          </View>
-        )}
-      </Section>
+        </View>
 
-      <Section title="Open Tabs">
-        {openParticipants.map((participant, index) => (
-          <View key={participant.participantId}>
-            <Row
-              title={participant.name}
-              subtitle={participant.billTitle}
-              onPress={() => navigation.navigate('BillDetail', { billId: participant.billId })}
-              right={<Text style={styles.positiveAmount}>{formatCurrency(participant.amount)}</Text>}
-            />
-            {index < openParticipants.length - 1 && <Divider />}
-          </View>
-        ))}
-        {openParticipants.length === 0 && (
-          <View style={styles.emptyState}>
-            <Ionicons name="checkmark-circle-outline" size={24} color={theme.success} />
-            <Text style={styles.emptyTitle}>Nothing pending</Text>
-            <Text style={styles.emptyText}>You are clear for now.</Text>
-          </View>
-        )}
-      </Section>
+        <View style={styles.listCard}>
+          {recentBills.map((bill, index) => (
+            <View key={bill.id}>
+              <TouchableOpacity style={styles.billItem} onPress={() => navigation.navigate('BillDetail', { billId: bill.id })}>
+                <View style={styles.billLeft}>
+                  <View style={styles.billIconCircle}>
+                    <Ionicons name="receipt-outline" size={20} color={theme.primary} />
+                  </View>
+                  <View style={styles.billDetails}>
+                    <Text style={styles.billName}>{bill.title}</Text>
+                    <Text style={styles.billSubtext}>{new Date(bill.createdAt).toLocaleDateString()} · {bill.people} people</Text>
+                  </View>
+                </View>
+                <View style={styles.billRight}>
+                  <Text style={styles.billAmount}>${Number(bill.total).toFixed(2)}</Text>
+                  <Text style={bill.status === 'settled' ? styles.billYourShareGreen : styles.billYourShare}>
+                    {bill.status === 'settled' ? 'Settled' : 'Pending'}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              {index < recentBills.length - 1 && <View style={styles.divider} />}
+            </View>
+          ))}
+          {recentBills.length === 0 && (
+            <Text style={styles.emptyText}>Scan a receipt to create your first bill.</Text>
+          )}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, styles.sectionInset]}>Open Tabs</Text>
+        <View style={styles.listCard}>
+          {openParticipants.map((participant, index) => (
+            <View key={participant.participantId}>
+              <TouchableOpacity style={styles.friendItem} onPress={() => navigation.navigate('BillDetail', { billId: participant.billId })}>
+                <View style={styles.friendLeft}>
+                  <View style={styles.friendAvatar}>
+                    <Text style={styles.friendInitial}>{participant.name.charAt(0).toUpperCase()}</Text>
+                  </View>
+                  <View>
+                    <Text style={styles.friendName}>{participant.name}</Text>
+                    <Text style={styles.billSubtext}>{participant.billTitle}</Text>
+                  </View>
+                </View>
+                <Text style={styles.friendOwesYou}>owes ${Number(participant.amount).toFixed(2)}</Text>
+              </TouchableOpacity>
+              {index < openParticipants.length - 1 && <View style={styles.divider} />}
+            </View>
+          ))}
+          {openParticipants.length === 0 && (
+            <Text style={styles.emptyText}>No open tabs right now.</Text>
+          )}
+        </View>
+      </View>
     </ScrollView>
   );
 }
 
 const createStyles = (theme) => StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.background },
-  content: { paddingTop: 18, paddingBottom: 28 },
   profileButton: { marginRight: 16 },
-  hero: { paddingHorizontal: 20, paddingBottom: 18 },
-  kicker: { color: theme.textTertiary, fontSize: 13, fontWeight: '800', textTransform: 'uppercase' },
-  balanceLabel: { color: theme.textSecondary, fontSize: 15, marginTop: 16, marginBottom: 4 },
-  metrics: {
-    marginTop: 18,
-    borderWidth: 1,
-    borderColor: theme.border,
+  statsWrapper: { marginTop: 24, alignItems: 'center', gap: 12 },
+  statCard: {
+    width: '85%',
     backgroundColor: theme.card,
     borderRadius: 8,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: theme.border,
     flexDirection: 'row',
-    paddingVertical: 14,
+    alignItems: 'center',
   },
-  metric: { flex: 1, alignItems: 'center', paddingHorizontal: 8 },
-  metricDivider: { width: 1, backgroundColor: theme.divider },
-  metricLabel: { color: theme.textTertiary, fontSize: 12, marginBottom: 5 },
-  metricValue: { color: theme.text, fontSize: 15, fontWeight: '800' },
-  positive: { color: theme.success },
-  negative: { color: theme.error },
-  actions: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, marginBottom: 28 },
-  actionButton: {
+  statIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.cardDark || theme.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  statIconContainerGreen: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.cardAccentDark || theme.cardAccent,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  statLabel: { fontSize: 12, color: theme.textTertiary, marginBottom: 4, textTransform: 'uppercase' },
+  statAmountNegative: { fontSize: 20, fontWeight: '600', color: theme.error },
+  statAmountPositive: { fontSize: 20, fontWeight: '600', color: theme.success },
+  actionChips: { flexDirection: 'row', paddingHorizontal: 20, marginVertical: 32, gap: 8 },
+  chip: {
     flex: 1,
-    minHeight: 52,
-    backgroundColor: theme.primary,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
     flexDirection: 'row',
-    gap: 8,
-  },
-  actionButtonText: { color: '#000', fontWeight: '800', fontSize: 15 },
-  secondaryAction: {
-    width: 116,
-    minHeight: 52,
-    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: theme.border,
     backgroundColor: theme.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
-  secondaryActionText: { color: theme.text, fontWeight: '800', fontSize: 15 },
-  linkText: { color: theme.primary, fontWeight: '800' },
-  rowAmount: { color: theme.text, fontWeight: '800', marginBottom: 6 },
-  positiveAmount: { color: theme.success, fontWeight: '800', fontSize: 16 },
-  emptyState: { alignItems: 'center', padding: 24 },
-  emptyTitle: { color: theme.text, fontWeight: '800', marginTop: 8 },
-  emptyText: { color: theme.textTertiary, textAlign: 'center', marginTop: 4 },
+  chipText: { fontSize: 13, color: theme.text, fontWeight: '500' },
+  section: { marginBottom: 32 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 16 },
+  sectionInset: { paddingHorizontal: 20, marginBottom: 16 },
+  sectionTitle: { fontSize: 22, fontWeight: '600', color: theme.text },
+  seeAll: { fontSize: 15, color: theme.primary, fontWeight: '500' },
+  listCard: {
+    backgroundColor: theme.card,
+    marginHorizontal: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  billItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 },
+  billLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  billIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    backgroundColor: theme.cardAccentDark || theme.cardAccent,
+  },
+  billDetails: { flex: 1 },
+  billName: { fontSize: 16, fontWeight: '500', color: theme.text },
+  billSubtext: { fontSize: 13, color: theme.textTertiary },
+  billRight: { alignItems: 'flex-end' },
+  billAmount: { fontSize: 16, fontWeight: '500', color: theme.text },
+  billYourShare: { fontSize: 13, color: theme.textSecondary },
+  billYourShareGreen: { fontSize: 13, color: theme.success, fontWeight: '500' },
+  divider: { height: 1, backgroundColor: theme.border, marginLeft: 68 },
+  friendItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 },
+  friendLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  friendAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  friendInitial: { fontSize: 16, fontWeight: '600', color: '#000' },
+  friendName: { fontSize: 16, fontWeight: '500', color: theme.text },
+  friendOwesYou: { fontSize: 14, color: theme.success, fontWeight: '500' },
+  emptyText: { color: theme.textTertiary, padding: 16, textAlign: 'center' },
 });

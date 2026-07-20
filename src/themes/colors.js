@@ -1,67 +1,81 @@
 export const lightTheme = {
-  background: '#f7f8f6',
+  // Background colors
+  background: '#f5f5f5',
   surface: '#ffffff',
-  primary: '#00C805',
-  primaryLight: '#E6F8EA',
-  primaryDark: '#008F11',
-  text: '#0B0F0C',
-  textSecondary: '#4F5A52',
-  textTertiary: '#7B857E',
-  border: '#E1E6E1',
-  divider: '#EDF0ED',
+  
+  // Primary colors (keeping default for light mode)
+  primary: '#6200ee',
+  primaryLight: '#bb86fc',
+  primaryDark: '#3700b3',
+  
+  // Text colors
+  text: '#333333',
+  textSecondary: '#666666',
+  textTertiary: '#999999',
+  
+  // UI elements
+  border: '#e0e0e0',
+  divider: '#e0e0e0',
   shadow: '#000000',
+  
+  // Status colors
   success: '#00C805',
-  error: '#E5484D',
-  warning: '#F5A524',
-  info: '#2D7FF9',
+  error: '#ff3b30',
+  warning: '#ff9500',
+  info: '#007aff',
+  
+  // Card colors
   card: '#ffffff',
-  cardDark: '#F0F3F0',
-  cardAccent: '#E6F8EA',
-  cardAccentDark: '#D8F4DE',
-  badgeSuccessBackground: '#E6F8EA',
-  badgeSuccessText: '#007A12',
-  badgeWarningBackground: '#FFF4D8',
-  badgeWarningText: '#8A5A00',
-  badgeErrorBackground: '#FDEBEC',
-  badgeErrorText: '#B4232A',
-  inputBackground: '#FFFFFF',
+  cardDark: '#f3f3f3',
+  cardAccent: '#f0e6ff',
+  cardAccentDark: '#e7d8ff',
+  
+  // Tab bar
   tabBarBackground: '#ffffff',
-  tabBarActive: '#00A514',
-  tabBarInactive: '#89918B',
+  tabBarActive: '#6200ee',
+  tabBarInactive: '#8e8e93',
 };
 
 export const darkTheme = {
-  background: '#000000',
-  surface: '#101310',
-  primary: '#00C805',
-  primaryLight: '#27E142',
-  primaryDark: '#00A804',
+  // Background colors - Robinhood style
+  background: '#000000',           // Pure black background
+  surface: '#121212',              // Slightly lighter for cards
+  
+  // Primary colors - Robinhood green
+  primary: '#00C805',              // Robinhood green
+  primaryLight: '#00FF41',         // Lighter green
+  primaryDark: '#00A804',          // Darker green
+  
+  // Text colors
   text: '#ffffff',
-  textSecondary: '#B8C0BA',
-  textTertiary: '#737C76',
-  border: '#1F261F',
-  divider: '#171D17',
+  textSecondary: '#b3b3b3',
+  textTertiary: '#6e6e6e',
+  
+  // UI elements
+  border: '#1e1e1e',
+  divider: '#2c2c2c',
   shadow: '#000000',
-  success: '#00C805',
+  
+  // Status colors
+  success: '#00C805',              // Robinhood green
   error: '#FF3B30',
   warning: '#FFB800',
   info: '#5AC8FA',
-  card: '#101310',
-  cardDark: '#090B09',
-  cardAccent: '#123A18',
-  cardAccentDark: '#0B2510',
-  badgeSuccessBackground: '#0B3411',
-  badgeSuccessText: '#4FE568',
-  badgeWarningBackground: '#382700',
-  badgeWarningText: '#FFD26A',
-  badgeErrorBackground: '#351012',
-  badgeErrorText: '#FF8A8F',
-  inputBackground: '#0A0D0A',
+  
+  // Card colors
+  card: '#1b1b1b',                 // Dark cards
+  cardDark: '#0d0d0d',             // Even darker for contrast
+  cardAccent: '#00C805',           // Green accent
+  cardAccentDark: '#1a3a1a',       // Dark green background
+  
+  // Tab bar
   tabBarBackground: '#000000',
   tabBarActive: '#00C805',
-  tabBarInactive: '#6E776F',
+  tabBarInactive: '#6e6e6e',
+  
+  // Additional Robinhood-specific colors
   graphGreen: '#00C805',
   graphRed: '#FF3B30',
-  chipBackground: '#121712',
+  chipBackground: '#1e1e1e',
   chipText: '#ffffff',
 };
